@@ -1,4 +1,4 @@
-﻿using Accord.Imaging;
+using Accord.Imaging;
 using Accord.Imaging.Filters;
 using NLog;
 using System;
@@ -524,6 +524,27 @@ namespace InventoryKamera
             return GenshinProcesor.CopyBitmap(card,
                 new Rectangle(
                     x: (int)(card.Width * 0.75),
+                    y: (int)(card.Height * (baseY + yShift)),
+                    width: (int)(card.Width * 0.0955),
+                    height: (int)(card.Height * (Navigation.IsNormal ? 0.055 : 0.0495))));
+        }
+
+        /// <summary>
+        /// Extracts a bitmap copy of an artifact's mark/favorite status icon.
+        /// Coordinates may need calibration if Genshin's UI changes.
+        /// </summary>
+        /// <param name="card">Bitmap of the item card</param>
+        /// <param name="isSanctified">Whether the artifact has Sanctifying Elixir info displayed</param>
+        /// <returns>A bitmap copy of the item card's mark status icon</returns>
+        internal static Bitmap GetMarkedBitmap(Bitmap card, bool isSanctified = false)
+        {
+            double baseY = Navigation.IsNormal ? 0.353 : 0.309;
+            double sanctifiedShift = Navigation.IsNormal ? 0.0520 : 0.0471;
+            double yShift = isSanctified ? sanctifiedShift : 0.0;
+
+            return GenshinProcesor.CopyBitmap(card,
+                new Rectangle(
+                    x: (int)(card.Width * 0.855),
                     y: (int)(card.Height * (baseY + yShift)),
                     width: (int)(card.Width * 0.0955),
                     height: (int)(card.Height * (Navigation.IsNormal ? 0.055 : 0.0495))));

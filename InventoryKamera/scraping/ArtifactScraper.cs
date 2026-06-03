@@ -1,4 +1,4 @@
-﻿using Accord.Imaging;
+using Accord.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -197,7 +197,7 @@ namespace InventoryKamera
         public async void QueueScan(int id)
 		{
 			var card = GetItemCard();
-            Bitmap name, gearSlot, mainStat, subStats, level, equipped, locked, sanctify;
+            Bitmap name, gearSlot, mainStat, subStats, level, equipped, locked, marked, sanctify;
 			bool _sanctify;
 
 			name = GetItemNameBitmap(card);
@@ -213,6 +213,7 @@ namespace InventoryKamera
 
             // may change because of sanctifying
             locked = GetLockedBitmap(card, _sanctify);
+            marked = GetMarkedBitmap(card, _sanctify);
             level = GetLevelBitmap(card, _sanctify);
             subStats = GetSubstatsBitmap(card, _sanctify);
 
@@ -234,6 +235,7 @@ namespace InventoryKamera
 				subStats,
 				equipped, //5
 				locked,
+				marked,
                 sanctify,
                 card
 			};
@@ -316,10 +318,11 @@ namespace InventoryKamera
             int rarity = 0;
 			int level = 0;
 			bool _lock = false;
+			bool _marked = false;
 
-			if (bm.Count >= 6)
+			if (bm.Count >= 8)
 			{
-				int a_name = 0; int a_gearSlot = 1; int a_mainStat = 2; int a_level = 3; int a_subStats = 4; int a_equippedCharacter = 5; int a_lock = 6; 
+				int a_name = 0; int a_gearSlot = 1; int a_mainStat = 2; int a_level = 3; int a_subStats = 4; int a_equippedCharacter = 5; int a_lock = 6; int a_marked = 7; 
 				// Get Rarity
 				rarity = GetRarity(bm[a_name]);
 
@@ -332,6 +335,33 @@ namespace InventoryKamera
 				Color lockedColor = Color.FromArgb(255, 70, 80, 100); // Dark area around red lock
 				Color lockStatus = bm[a_lock].GetPixel(10, 10);
 				_lock = GenshinProcesor.CompareColors(lockedColor, lockStatus);
+
+				_marked = false;
+
+				for (int x = 0; x < bm[a_marked].Width; x++)
+				{
+					for (int y = 0; y < bm[a_marked].Height; y++)
+					{
+						Color pixel = bm[a_marked].GetPixel(x, y);
+
+						bool isYellow =
+							pixel.R >= 220 &&
+							pixel.G >= 160 &&
+							pixel.G <= 230 &&
+							pixel.B <= 120;
+
+						if (isYellow)
+						{
+							_marked = true;
+							break;
+						}
+					}
+
+					if (_marked)
+					{
+						break;
+					}
+				}
 
 				// Improved Scanning using multi threading
 				List<Task> tasks = new List<Task>();
@@ -355,7 +385,7 @@ namespace InventoryKamera
 
 				await Task.WhenAll(tasks.ToArray());
 			}
-			return new Artifact(setName, rarity, level, gearSlot, mainStat, subStats, unactivatedSubStats, equippedCharacter, id, _lock);
+			return new Artifact(setName, rarity, level, gearSlot, mainStat, subStats, unactivatedSubStats, equippedCharacter, id, _lock, _marked);
 		}
 
 		private static int GetRarity(Bitmap bm)

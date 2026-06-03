@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -36,6 +36,12 @@ namespace InventoryKamera
 		[JsonProperty("lock")]
 		public bool Lock { get; private set; }
 
+		// Custom extension: Genshin artifact mark/favorite state.
+		// Unknown JSON fields are ignored by GOOD-compatible importers,
+		// while custom tools can read this as "marked".
+		[JsonProperty("marked")]
+		public bool Marked { get; private set; }
+
         [JsonProperty("id")]
 		public int Id { get; private set; }
 		
@@ -50,10 +56,11 @@ namespace InventoryKamera
 			SetName = null;
 			EquippedCharacter = null;
 			Lock = false;
+			Marked = false;
 			Id = 0;
 		}
 
-		public Artifact(string _setName, int _rarity, int _level, string _gearSlot, string _mainStat, List<SubStat> _subStats, List<SubStat> _unactivatedSubStats, string _equippedCharacter = null, int _id = 0, bool _Lock = false)
+		public Artifact(string _setName, int _rarity, int _level, string _gearSlot, string _mainStat, List<SubStat> _subStats, List<SubStat> _unactivatedSubStats, string _equippedCharacter = null, int _id = 0, bool _Lock = false, bool _Marked = false)
 		{
 			GearSlot = string.IsNullOrWhiteSpace(_gearSlot) ? "" : _gearSlot;
 			Rarity = _rarity;
@@ -64,6 +71,7 @@ namespace InventoryKamera
 			SetName = string.IsNullOrWhiteSpace(_setName) ? "" : _setName;
 			EquippedCharacter = string.IsNullOrWhiteSpace(_equippedCharacter) ? "" : _equippedCharacter;
 			Lock = _Lock;
+			Marked = _Marked;
 			Id = _id;
 		}
 
@@ -163,7 +171,8 @@ namespace InventoryKamera
 				&& SubStats == artifact.SubStats
 				&& SetName == artifact.SetName
 				&& EquippedCharacter == artifact.EquippedCharacter
-				&& Lock == artifact.Lock;
+				&& Lock == artifact.Lock
+				&& Marked == artifact.Marked;
 		}
 
 		public override string ToString()
@@ -178,12 +187,13 @@ namespace InventoryKamera
 			SubStats.ForEach(s => output += $"Substat {SubStats.IndexOf(s)+1}: {s}\n");
 
 			output += $"Locked: {Lock}\n";
+			output += $"Marked: {Marked}\n";
 
 			if (!string.IsNullOrWhiteSpace(EquippedCharacter)) output += $"Equipped character: {EquippedCharacter}\n";
 			return output;
 		}
 
-		public override int GetHashCode() => (GearSlot, Rarity, MainStat, Level, SubStats, SetName, EquippedCharacter, Lock).GetHashCode();
+		public override int GetHashCode() => (GearSlot, Rarity, MainStat, Level, SubStats, SetName, EquippedCharacter, Lock, Marked).GetHashCode();
 
 		public static bool operator ==(Artifact lhs, Artifact rhs)
 		{
