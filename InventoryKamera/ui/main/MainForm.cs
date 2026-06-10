@@ -315,7 +315,7 @@ namespace InventoryKamera
                         Logger.Info("Exported data");
 
                         UserInterface.SetProgramStatus("Finished");
-                        OpenOptimizerDialog(good);
+                        //OpenOptimizerDialog(good);
                     }
                     catch (ThreadAbortException)
                     {

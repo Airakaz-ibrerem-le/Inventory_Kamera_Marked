@@ -29,7 +29,7 @@ namespace InventoryKamera
 			int page = 1;
 
             SetSort();
-            ClearFilters();
+            //TMP ClearFilters();
 
             var (rectangles, cols, rows) = GetPageOfItems(page);
 			int fullPage = cols * rows;
@@ -38,6 +38,7 @@ namespace InventoryKamera
 			int totalRows = (int)Math.Ceiling(artifactCount / (decimal)cols);
 			int cardsQueued = 0;
 			int rowsQueued = 0;
+			int artifactsQueued = 0;
 			UserInterface.SetArtifact_Max(artifactCount);
 
 			StopScanning = false;
@@ -106,8 +107,12 @@ namespace InventoryKamera
 					Navigation.SystemWait(Navigation.Speed.SelectNextInventoryItem);
 
 					// Queue card for scanning
-					QueueScan(cardsQueued);
+					if (QueueScan(artifactsQueued))
+					{
+						artifactsQueued++;
+					}
 					cardsQueued++;
+
 					if (cardsQueued >= artifactCount || StopScanning)
 					{
 						if (StopScanning) Logger.Info("Stopping artifact scan based on filtering");
@@ -194,7 +199,7 @@ namespace InventoryKamera
             }
         }
 
-        public async void QueueScan(int id)
+        public bool QueueScan(int id)
 		{
 			var card = GetItemCard();
             Bitmap name, gearSlot, mainStat, subStats, level, equipped, locked, marked, sanctify;
@@ -241,16 +246,21 @@ namespace InventoryKamera
 			};
 
             bool belowRarity = GetRarity(name) < Properties.Settings.Default.MinimumArtifactRarity;
-            bool belowLevel = ScanArtifactLevel(level) < Properties.Settings.Default.MinimumArtifactLevel;
-            StopScanning = (SortByLevel && belowLevel) || (!SortByLevel && belowRarity);
+			bool belowLevel = ScanArtifactLevel(level) < Properties.Settings.Default.MinimumArtifactLevel;
 
-			if (StopScanning || belowRarity || belowLevel)
+			bool shouldSkipBelowRarity = belowRarity && ScanArtifactLevel(level) > 0;
+			bool shouldStopBelowRarity = belowRarity && ScanArtifactLevel(level) <= 0;
+
+			StopScanning = (SortByLevel && belowLevel) || (!SortByLevel && shouldStopBelowRarity);
+
+			if (StopScanning || shouldSkipBelowRarity || belowLevel)
             {
 				artifactImages.ForEach(i => i.Dispose());
-				return;
+				return false;
             }
             // Send images to Worker Queue
             InventoryKamera.workerQueue.Enqueue(new OCRImageCollection(artifactImages, "artifact", id));
+            return true;
         }
 
         private Bitmap GetSubstatsBitmap(Bitmap card, bool isSanctified = false)
