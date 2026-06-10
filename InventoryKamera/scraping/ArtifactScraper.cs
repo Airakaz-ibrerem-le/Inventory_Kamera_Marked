@@ -342,9 +342,32 @@ namespace InventoryKamera
 				bool b_equipped = GenshinProcesor.CompareColors(equippedColor, equippedStatus);
 
 				// Check for lock color
-				Color lockedColor = Color.FromArgb(255, 70, 80, 100); // Dark area around red lock
-				Color lockStatus = bm[a_lock].GetPixel(10, 10);
-				_lock = GenshinProcesor.CompareColors(lockedColor, lockStatus);
+				_lock = false;
+
+				for (int x = 0; x < bm[a_lock].Width; x++)
+				{
+					for (int y = 0; y < bm[a_lock].Height; y++)
+					{
+						Color pixel = bm[a_lock].GetPixel(x, y);
+
+						bool isRedLock =
+							pixel.R >= 200 &&
+							pixel.G >= 80 &&
+							pixel.G <= 170 &&
+							pixel.B <= 160;
+
+						if (isRedLock)
+						{
+							_lock = true;
+							break;
+						}
+					}
+
+					if (_lock)
+					{
+						break;
+					}
+				}
 
 				_marked = false;
 
